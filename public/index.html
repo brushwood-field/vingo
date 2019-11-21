@@ -31,8 +31,10 @@
                     <div class="col col-sm-12">
                         <p id="lottery">{{ current }}</p>
                     </div>
+                </div>
+                <div class="row align-items-buttom">
                     <div class="col col-sm-12">
-                        <button type="button" class="btn btn-dark btn-lg btn-block" onclick="lottery.spin();">SPIN</button>
+                        <button type="button" class="btn btn-dark btn-lg btn-block" onclick="lottery.spin();">SPIN !</button>
                     </div>
                 </div>
             </div>
@@ -50,13 +52,9 @@
                                     <th scope="col">O</th>
                                 </tr>
                             </thead>
-                            <tbody id="numbers">
-                                <tr v-for="(elem, index) in elements">
-                                    <td v-bind:class="{ 'bg-danger': elem.isActive }">{{ elem.num }}</td>
-                                    <td v-bind:class="{ 'bg-danger': elem.isActive }">{{ elem.num + 15 }}</td>
-                                    <td v-bind:class="{ 'bg-danger': elem.isActive }">{{ elem.num + 30 }}</td>
-                                    <td v-bind:class="{ 'bg-danger': elem.isActive }">{{ elem.num + 45 }}</td>
-                                    <td v-bind:class="{ 'bg-danger': elem.isActive }">{{ elem.num + 60 }}</td>
+                            <tbody id="seeds">
+                                <tr v-for="row in 15">
+                                    <td v-for="col in 5" v-bind:class="{ 'bg-danger': numbers[current(row, col)].isActive }">{{ numbers[current(row, col)].num }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -72,9 +70,9 @@
     <script src="/assets/js/umd/popper.min.js"></script>
     <script src="/assets/js/bootstrap.min.js"></script>
     <script>
-        const elements = (function () {
+        const numbers = (function () {
                 var _nums = [];
-                for (var i = 0, len = 15; i < len; i++) {
+                for (var i = 0, len = 75; i < len; i++) {
                     var seed = new Object;
                     seed.num = i + 1;
                     seed.isActive = false;
@@ -82,20 +80,46 @@
                 }
                 return _nums;
             }());
-        var vm = new Vue({
-            el: '#numbers',
+        const culcRandom = function() {
+            return Math.floor(Math.random() * Math.floor(75)) + 1;
+        }
+        var seeds = new Vue({
+            el: '#seeds',
             data: {
-                elements: elements
+                numbers: numbers
+            },
+            methods: {
+                current: function (row, col) {
+                    var coordinate = (row <= 1 ? 0 : row - 1) + (col <= 1 ? 0 : (col - 1) * 15);
+                    return coordinate;
+                },
+                hit: function (num) {
+                    this.numbers[num - 1].isActive = true;
+                }
             }
         });
         var lottery = new Vue({
             el: '#lottery',
             data: {
-                current: 0
+                current: 0,
+                hits: []
             },
             methods: {
                 spin: function() {
-                    this.current = Math.floor(Math.random() * Math.floor(75)) + 1;
+                    if (this.hits.length >= 75) {
+                        console.log('oshimai!');
+                        return;
+                    }
+                    var culced = culcRandom();
+                    while (this.hits.indexOf(culced) !== -1) {
+                        if (this.hits.length >= 75) {
+                            break;
+                        }
+                        culced = culcRandom();
+                    }
+                    this.current = culced;
+                    this.hits.push(culced);
+                    seeds.hit(culced);
                 }
             }
         });
